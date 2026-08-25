@@ -16,12 +16,12 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MateuszJuszczyk/pi-codex-account.git"
+    "url": "git+https://github.com/andreagrandi/omp-codex-account.git"
   },
   "bugs": {
-    "url": "https://github.com/MateuszJuszczyk/pi-codex-account/issues"
+    "url": "https://github.com/andreagrandi/omp-codex-account/issues"
   },
-  "homepage": "https://github.com/MateuszJuszczyk/pi-codex-account#readme",
+  "homepage": "https://github.com/andreagrandi/omp-codex-account#readme",
   "files": [
     "src",
     "assets",
@@ -37,9 +37,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "latest",
