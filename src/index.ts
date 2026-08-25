@@ -1571,7 +1571,7 @@ async function queryCodexUsage(
     {
       headers: {
         Authorization: `Bearer ${credential.access}`,
-        "User-Agent": "pi-codex-accounts",
+        "User-Agent": "omp-codex-account",
       },
     },
     timeoutMs,
