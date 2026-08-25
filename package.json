@@ -1,6 +1,6 @@
 {
   "name": "pi-codex-account",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Oh My Pi extension to switch between multiple OpenAI Codex OAuth accounts via OMP agent.db or legacy Pi auth.json.",
   "type": "module",
   "keywords": [
@@ -16,12 +16,12 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MateuszJuszczyk/pi-codex-account.git"
+    "url": "git+https://github.com/andreagrandi/omp-codex-account.git"
   },
   "bugs": {
-    "url": "https://github.com/MateuszJuszczyk/pi-codex-account/issues"
+    "url": "https://github.com/andreagrandi/omp-codex-account/issues"
   },
-  "homepage": "https://github.com/MateuszJuszczyk/pi-codex-account#readme",
+  "homepage": "https://github.com/andreagrandi/omp-codex-account#readme",
   "files": [
     "src",
     "assets",
@@ -37,9 +37,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "latest",

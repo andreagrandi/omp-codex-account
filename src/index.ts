@@ -222,6 +222,38 @@ export function normalizedCredential(
     accountId: typeof obj.accountId === "string" ? obj.accountId : undefined,
   };
 }
+function matchesAccountId(
+  active: CodexCredential,
+  saved: CodexCredential,
+): boolean {
+  return (
+    typeof active.accountId === "string" &&
+    active.accountId.length > 0 &&
+    typeof saved.accountId === "string" &&
+    saved.accountId.length > 0 &&
+    active.accountId === saved.accountId
+  );
+}
+
+function matchesRefresh(
+  active: CodexCredential,
+  saved: CodexCredential,
+): boolean {
+  return (
+    typeof active.refresh === "string" &&
+    active.refresh.length > 0 &&
+    typeof saved.refresh === "string" &&
+    saved.refresh.length > 0 &&
+    active.refresh === saved.refresh
+  );
+}
+
+function strictlyMatchesCredential(
+  active: CodexCredential,
+  saved: CodexCredential,
+): boolean {
+  return matchesAccountId(active, saved) || matchesRefresh(active, saved);
+}
 
 // ---------------------------------------------------------------------------
 // AuthJsonStorage — legacy ~/.pi/agent/auth.json + codex-accounts.json
@@ -310,20 +342,25 @@ export class AuthJsonStorage implements ICredentialStorage {
   detectActiveLabel(credential: CodexCredential | undefined): string | undefined {
     if (!credential) return undefined;
     const store = this.loadStore();
+    const stored = store.active;
+    if (stored) {
+      const acct = store.accounts[stored];
+      if (acct && strictlyMatchesCredential(credential, acct.credential)) {
+        return stored;
+      }
+    }
+
     for (const [label, acct] of Object.entries(store.accounts)) {
-      const c = acct.credential;
-      if (
-        credential.accountId &&
-        c.accountId &&
-        credential.accountId === c.accountId
-      ) {
+      if (label === stored) continue;
+      if (matchesAccountId(credential, acct.credential)) {
         return label;
       }
     }
     for (const [label, acct] of Object.entries(store.accounts)) {
-      if (acct.credential.refresh === credential.refresh) return label;
+      if (label === stored) continue;
+      if (matchesRefresh(credential, acct.credential)) return label;
     }
-    return store.active;
+    return stored;
   }
 
   switchTo(credential: CodexCredential, label: string): void {
@@ -1254,18 +1291,70 @@ function doSave(
     );
     return;
   }
-  const existed = !!storage.readAccount(rawLabel);
+  const existingAccount = storage.readAccount(rawLabel);
+  const existed = existingAccount !== undefined;
   const account: SavedAccount = {
     credential: { ...active, type: "oauth" },
     savedAt: Date.now(),
-    lastUsedAt: storage.readAccount(rawLabel)?.lastUsedAt,
+    lastUsedAt: existingAccount?.lastUsedAt,
   };
 
   storage.saveAccount(rawLabel, account);
+  updateAccountStatus(ctx, storage);
 
   ctx.ui.notify(
     `${existed ? "Updated" : "Saved"} Codex account "${rawLabel}" — ${shortAccountId(active)}.`,
     "info",
+  );
+}
+
+function updateAccountStatus(
+  ctx: ExtensionCommandContext | ExtensionContext,
+  storage: ICredentialStorage,
+): void {
+  const active = storage.readActiveCredential();
+  let label: string | undefined;
+  if (active) {
+    const preferred = storage.detectActiveLabel(active);
+    const cached = new Map<string, SavedAccount | undefined>();
+    const readCached = (candidate: string): SavedAccount | undefined => {
+      if (!cached.has(candidate)) {
+        cached.set(candidate, storage.readAccount(candidate));
+      }
+      return cached.get(candidate);
+    };
+
+    if (preferred) {
+      const account = readCached(preferred);
+      if (account && strictlyMatchesCredential(active, account.credential)) {
+        label = preferred;
+      }
+    }
+
+    if (!label) {
+      const accounts = storage.listLabels().map((candidate) => ({
+        candidate,
+        account: readCached(candidate),
+      }));
+      for (const { candidate, account } of accounts) {
+        if (account && matchesAccountId(active, account.credential)) {
+          label = candidate;
+          break;
+        }
+      }
+      if (!label) {
+        for (const { candidate, account } of accounts) {
+          if (account && matchesRefresh(active, account.credential)) {
+            label = candidate;
+            break;
+          }
+        }
+      }
+    }
+  }
+  ctx.ui.setStatus(
+    "codex-account",
+    active ? `Codex: ${label ?? "(unsaved)"}` : undefined,
   );
 }
 
@@ -1285,6 +1374,7 @@ async function doSwitch(
   }
 
   storage.switchTo(acct.credential, label);
+  updateAccountStatus(ctx, storage);
 
   ctx.ui.notify(
     `Switched to Codex account "${label}" — ${shortAccountId(acct.credential)}. Reloading…`,
@@ -1306,6 +1396,7 @@ function doRename(
     return;
   }
   if (storage.renameAccount(from, to)) {
+    updateAccountStatus(ctx, storage);
     ctx.ui.notify(`Renamed Codex account "${from}" → "${to}".`, "info");
   } else {
     if (!storage.readAccount(from)) {
@@ -1398,6 +1489,7 @@ function doRemove(
     return;
   }
   storage.removeAccount(label);
+  updateAccountStatus(ctx, storage);
   ctx.ui.notify(
     `Removed Codex account "${label}". (Active credential was not modified.)`,
     "info",
@@ -1823,7 +1915,10 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.setStatus("codex-accounts-usage", undefined);
   };
 
-  pi.on("session_start", (_event, ctx) => clearUsageStatuslines(ctx));
+  pi.on("session_start", (_event, ctx) => {
+    clearUsageStatuslines(ctx);
+    updateAccountStatus(ctx, resolveActiveStorage());
+  });
   pi.on("model_select", (_event, ctx) => clearUsageStatuslines(ctx));
   pi.on("session_shutdown", (_event, ctx) => clearUsageStatuslines(ctx));
 

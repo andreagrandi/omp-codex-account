@@ -2,7 +2,7 @@
 
 **pi-codex-account** for [Oh My Pi](https://ohmy.pi) (OMP) — save, switch, inspect, and manage multiple OpenAI Codex (ChatGPT) OAuth accounts.
 
-Forked from [fadilsflow/pi-codex-account](https://github.com/fadilsflow/pi-codex-account) with OMP credential storage support.
+This [fork](https://github.com/andreagrandi/omp-codex-account) is based on [fadilsflow/pi-codex-account](https://github.com/fadilsflow/pi-codex-account). It adds Oh My Pi (OMP) credential storage support and is maintained independently.
 
 ## Problem
 
@@ -10,40 +10,33 @@ Your AI coding agent stores one `openai-codex` login at a time. If you have mult
 
 ## Storage
 
-**pi-codex-account** auto-detects which credential store to use:
+**pi-codex-account** uses the OMP SQLite credential store:
 
-| Environment | Storage backend | Location |
-|---|---|---|
-| **Oh My Pi** (OMP) | SQLite (`bun:sqlite`) | `~/.omp/agent/agent.db` — credentials saved and restored from the database. Named snapshots stored as JSON files in `~/.omp/codex-accounts/`. |
-| **Legacy Pi** | JSON file | `~/.pi/agent/auth.json` (active login), `~/.pi/agent/codex-accounts.json` (saved snapshots). |
+- Active credentials are saved in `~/.omp/agent/agent.db`.
+- Named account snapshots are saved as JSON files in `~/.omp/codex-accounts/`.
 
-Detection works in order:
-1. If `~/.omp/agent/agent.db` exists and contains `openai-codex` credentials, it uses the **OMP SQLite backend**.
-2. Otherwise, it falls back to the **legacy JSON backend**.
+Optional environment variables can override these OMP locations:
 
-Both backends present the same commands and behaviour.
-
-> **Environment variables for override:**
-> - `OMP_AGENT_DB_PATH` — path to the OMP agent database (default `~/.omp/agent/agent.db`)
-> - `OMP_CODEX_ACCOUNTS_DIR` — directory for named credential snapshots (default `~/.omp/codex-accounts`)
-> - `PI_CODING_AGENT_DIR` — path to the legacy Pi agent directory (default `~/.pi/agent`)
+- `OMP_AGENT_DB_PATH` — OMP agent database path (default `~/.omp/agent/agent.db`)
+- `OMP_CODEX_ACCOUNTS_DIR` — account snapshot directory (default `~/.omp/codex-accounts`)
 
 ## Install
 
 ### From GitHub (Oh My Pi)
 
 ```bash
-pi install npm:github:MateuszJuszczyk/pi-codex-account
+omp plugin install https://github.com/andreagrandi/omp-codex-account
 ```
 
 ### From a local checkout
 
 ```bash
-git clone https://github.com/MateuszJuszczyk/pi-codex-account
-pi -e /path/to/pi-codex-account
+git clone https://github.com/andreagrandi/omp-codex-account.git
+cd omp-codex-account
+omp plugin install .
 ```
 
-After installing or updating, reload the agent:
+After installing or updating the extension, reload OMP:
 
 ```text
 /reload
@@ -56,7 +49,7 @@ Use `/codex` without arguments to open the interactive account picker.
 | Command | What it does |
 |---|---|
 | `/codex save <label>` | Save the current Codex login under a label. |
-| `/codex switch <label>` | Switch to a saved login and reload the agent. |
+| `/codex switch <label>` | Switch to a saved login and reload OMP. |
 | `/codex list` | List all saved logins. |
 | `/codex current` | Show the active (in-use) login. |
 | `/codex usage` | Query usage for the active login from ChatGPT's usage endpoint. |
@@ -89,11 +82,11 @@ Now you can flip between both accounts any time with `/codex switch work` or `/c
 
 ### /codex status
 
-Shows the storage backend (OMP SQLite or legacy JSON), how many credentials are stored, and which label is currently active.
+Shows the active storage backend, how many credentials are stored, and which label is currently active.
 
 ### /codex debug-db
 
-When running on the OMP backend, shows SQLite table names, column names, and the `openai-codex` row count. It intentionally does **not** print OAuth token values.
+When running on OMP, shows SQLite table names, column names, and the `openai-codex` row count. It intentionally does **not** print OAuth token values.
 
 ### Usage check
 
@@ -101,12 +94,7 @@ If `/codex usage` reports an expired token, send one model request first to let 
 
 ## Security
 
-The credential store contains OAuth tokens that grant access to your OpenAI Codex account.
-
-- **OMP backend:** credentials are stored in `~/.omp/agent/agent.db` (the OMP agent database) with named snapshots in `~/.omp/codex-accounts/`.
-- **Legacy backend:** credentials are in `~/.pi/agent/auth.json` and snapshots in `~/.pi/agent/codex-accounts.json`.
-
-**Never** commit, share, or copy these files to untrusted machines. The legacy backend writes `codex-accounts.json` with `0600` permissions (owner read/write only).
+The OMP credential store contains OAuth tokens that grant access to your OpenAI Codex account. **Never** commit, share, or copy `~/.omp/agent/agent.db` or files in `~/.omp/codex-accounts/` to untrusted machines.
 
 ### Backups
 
@@ -116,18 +104,19 @@ Before every SQLite write, the OMP backend creates:
 ~/.omp/agent/agent.db.bak.<timestamp>
 ```
 
-Named snapshots are plain JSON files. You can back them up by copying:
-- OMP: `~/.omp/codex-accounts/*.json`
-- Legacy: `~/.pi/agent/codex-accounts.json`
+Named snapshots are plain JSON files in `~/.omp/codex-accounts/`. To restore them, place the files back in that directory and run `/reload` in OMP.
 
-To restore snapshots, place the files back in the same location and run `/reload`.
+## Acknowledgments
+
+This project builds on [fadilsflow/pi-codex-account](https://github.com/fadilsflow/pi-codex-account). The upstream project is credited for the original account-switching extension; the OMP-specific changes in this fork are maintained here.
 
 ## Development
 
 ```bash
-git clone https://github.com/MateuszJuszczyk/pi-codex-account
-cd pi-codex-account
+git clone https://github.com/andreagrandi/omp-codex-account.git
+cd omp-codex-account
 bun install
+omp plugin install .
 bun run typecheck    # TypeScript type checks
 bun test             # Run test suite
 ```
@@ -144,6 +133,4 @@ The Pi extension manifest lives in `package.json`:
 
 ## Compatibility
 
-- **Oh My Pi / OMP** — full support with OMP SQLite credential storage.
-- **Legacy Pi** — full backward compatibility via `~/.pi/agent/auth.json` + `codex-accounts.json`.
-- Requires `@earendil-works/pi-coding-agent` as a peer dependency.
+Legacy Pi JSON credential storage remains supported for existing installations; OMP SQLite is the primary documented storage backend.
