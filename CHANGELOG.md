@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `pi-codex-account` are documented in this file.
+All notable changes to `omp-codex-account` are documented in this file.
 
 ## 0.1.1 - 2026-06-05
 

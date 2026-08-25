@@ -1,6 +1,6 @@
-# pi-codex-account
+# omp-codex-account
 
-**pi-codex-account** for [Oh My Pi](https://ohmy.pi) (OMP) — save, switch, inspect, and manage multiple OpenAI Codex (ChatGPT) OAuth accounts.
+**omp-codex-account** for [Oh My Pi](https://ohmy.pi) (OMP) — save, switch, inspect, and manage multiple OpenAI Codex (ChatGPT) OAuth accounts.
 
 This [fork](https://github.com/andreagrandi/omp-codex-account) is based on [fadilsflow/pi-codex-account](https://github.com/fadilsflow/pi-codex-account). It adds Oh My Pi (OMP) credential storage support and is maintained independently.
 
@@ -10,7 +10,7 @@ Your AI coding agent stores one `openai-codex` login at a time. If you have mult
 
 ## Storage
 
-**pi-codex-account** uses the OMP SQLite credential store:
+**omp-codex-account** uses the OMP SQLite credential store:
 
 - Active credentials are saved in `~/.omp/agent/agent.db`.
 - Named account snapshots are saved as JSON files in `~/.omp/codex-accounts/`.

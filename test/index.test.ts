@@ -27,7 +27,7 @@ const credential = (suffix: string): CodexCredential => ({
 
 beforeEach(() => {
   previousAgentDir = process.env.PI_CODING_AGENT_DIR;
-  agentDir = mkdtempSync(join(tmpdir(), "pi-codex-accounts-"));
+  agentDir = mkdtempSync(join(tmpdir(), "omp-codex-account-"));
   process.env.PI_CODING_AGENT_DIR = agentDir;
 });
 
