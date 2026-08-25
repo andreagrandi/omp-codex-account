@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 function tempRoot(): string {
-  const dir = mkdtempSync(join(tmpdir(), "pi-codex-account-"));
+  const dir = mkdtempSync(join(tmpdir(), "omp-codex-account-"));
   tempRoots.push(dir);
   return dir;
 }

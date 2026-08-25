@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "pi-codex-accounts",
+      "name": "omp-codex-account",
       "devDependencies": {
         "@earendil-works/pi-coding-agent": "latest",
         "@types/bun": "latest",
